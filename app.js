@@ -12,8 +12,6 @@ app.use((req, res, next) => {
   next();
 });
 
-
-
 ///CONTROLLERS
 
 //TOURS ROUTES....
