@@ -3,7 +3,8 @@ const tourControllers = require('../controllers/tourController');
 const tourRouters = express.Router();
 
 // tourRouters.param("id",tourControllers.paramsController);
-
+tourRouters.route('/get-promotion').get(tourControllers.getToursStatus);
+tourRouters.route('/monthly-plans/:year').get(tourControllers.monthlyPlan);
 tourRouters
   .route('/')
   .get(tourControllers.getTours)
@@ -17,3 +18,4 @@ tourRouters
   .patch(tourControllers.updateTours)
   .delete(tourControllers.deleteTour);
 module.exports = tourRouters;
+

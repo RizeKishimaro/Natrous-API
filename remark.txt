@@ -1,0 +1,73 @@
+  if (req.query.duration || req.query.difficulty || req.query.price) {
+    const reqQuery = { ...req.query };
+    console.log(reqQuery);
+    let queryStr = JSON.stringify(reqQuery); //object to json string
+    console.log(queryStr); //destructuring the object
+    queryStr = queryStr.replace(
+      /\b(gte|gt|lt|lte)\b/g, //using regular expression to insert some mongo statement
+      (result) => `$${result}` //change to gte to $gte
+    ); //replacping the string
+    //requesting
+    console.log(queryStr);
+    let executeQuery = await Tour.find(JSON.parse(queryStr));
+    executeQuery.sort(`${req.query.sort}`);
+
+    const data = executeQuery;
+    res.status(200).json({
+      status: 'success',
+      result: data.length,
+      data: {
+        data: data,
+      },
+    });
+  }
+  if (req.query.limit && req.query.page) {
+    const page = req.query.page * 1 || 1;
+    const limit = req.query.limit * 1 || 100;
+    const skip = (page - 1) * limit;
+    const executeQuery = await Tour.find().skip(skip).limit(limit);
+
+
+    res.status(200).json({
+      status: 'success',
+      result: executeQuery.length,
+      data: {
+        data: executeQuery,
+      },
+    });
+  }
+  //limiting the fields
+  if (req.query.fields) {
+    const rawFields = req.query.fields;
+    const fields = rawFields.split(',').join(' ');
+    const executeQuery = await Tour.find().select(fields);
+    res.status(200).json({
+      status: 'success',
+      result: executeQuery.length,
+      data: {
+        data: executeQuery,
+      },
+    });
+  } else {
+    const executeQuery = await Tour.find()
+    executeQuery.select("-__v")
+    res.status(200).json({
+      status: 'success',
+      result: executeQuery.length,
+      data: {
+        data: executeQuery,
+      },
+    });
+  }
+
+
+  
+
+
+
+
+
+
+
+
+  
