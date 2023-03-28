@@ -62,6 +62,41 @@
 
 
   
+const AppErrors = require('../utils/appErrors');
+
+const errDev = (err, res) => {
+  if (err.optionalError) {
+    res.status(err.statusCode).json({
+      status: err.status,
+      err: err,
+      message: err.message,
+      errStack: err.stack,
+    });
+  }
+};
+const handleDBcastError = (err) => {
+  console.log(err.path);
+  const message = `Invalid ${err.path}: ${err.value}`;
+  return new AppErrors(message, 400);
+};
+const errProd = (err, res) => {
+  console.log(err.optionalError);
+  console.log(err.message);
+  if (err.optionalError) {
+    res.status(err.statusCode).json({
+      status: err.status,
+      message: err.message,
+    });
+  } else {
+    console.log(err);
+    res.status(500).json({
+      
+      status: 'Error',
+      message: 'Sorry.We encountered some errors',
+    });
+  }
+};
+
 
 
 

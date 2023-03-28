@@ -1,5 +1,6 @@
 const express = require('express');
 const tourControllers = require('../controllers/tourController');
+const authControllers = require('../controllers/authControllers');
 const tourRouters = express.Router();
 
 // tourRouters.param("id",tourControllers.paramsController);
@@ -10,12 +11,11 @@ tourRouters
   .get(tourControllers.getTours)
   .post(tourControllers.checkParams, tourControllers.postTour)
   .put(tourControllers.addData)
-  .delete(tourControllers.deleteData);
+  .delete(authControllers.protect,authControllers.allowedRole("admin","lead-guide"),tourControllers.deleteData);
 
 tourRouters
   .route('/:id')
   .get(tourControllers.getRouteById)
   .patch(tourControllers.updateTours)
-  .delete(tourControllers.deleteTour);
+  .delete(authControllers.protect,authControllers.allowedRole("admin","lead-guide"),tourControllers.deleteTour);
 module.exports = tourRouters;
-

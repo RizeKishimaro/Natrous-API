@@ -1,0 +1,210 @@
+const { promisify } = require('util');
+const crypto = require('crypto');
+const Users = require('./../models/userModels');
+const jwt = require('jsonwebtoken');
+const catchAsync = require('../utils/catchError');
+const AppErrors = require('../utils/appErrors');
+const sendEmail = require('../email');
+const signToken = (id) => {
+  return jwt.sign({ id: id }, process.env.JWT_KEY, {
+    expiresIn: process.env.JWT_EXPIRES,
+  });
+};
+exports.signUpUser = catchAsync(async (req, res, next) => {
+  const newUser = await Users.create({
+    name: req.body.name,
+    email: req.body.email,
+    password: req.body.password,
+    passwordConfirm: req.body.passwordConfirm,
+    role: req.body.role,
+  });
+  const token = signToken(newUser._id);
+  res.status(201).json({
+    status: 'success',
+    message: 'Success Your account is created!',
+    token,
+    user: newUser,
+  });
+});
+exports.loginUser = catchAsync(async (req, res, next) => {
+  const { email, password } = { ...req.body };
+  //1st
+  if (!email || !password) {
+    return next(new AppErrors('Need Email or Password!', 400));
+  }
+
+  //2nd step
+  const user = await Users.findOne({ email }).select('+password');
+
+  if (!user || !(await user.checkPassword(password, user.password))) {
+    return next(new AppErrors('Invalid Username or Password!', 400));
+  }
+  const token = signToken(user._id);
+  console.log(token);
+  res.status(200).json({
+    status: 'Success',
+    token: token,
+  });
+});
+exports.protect = catchAsync(async (req, res, next) => {
+  let token = '';
+  console.log(req.headers.authorization);
+  if (
+    req.headers.authorization &&
+    req.headers.authorization.startsWith('Bearer')
+  ) {
+    token = req.headers.authorization.split(' ')[1];
+  }
+  if (!token) {
+    return next(new AppErrors('You are not authorized!Please login', 401));
+  }
+
+  const jwtAuth = await promisify(jwt.verify)(token, process.env.JWT_KEY).catch(
+    function (err) {
+      console.log(err);
+      return new AppErrors('Invalid JWT Key Format', 400);
+    }
+  );
+  const freshUser = await Users.findById(jwtAuth.id);
+  if (!freshUser) {
+    return next(new AppErrors('Your account has been deleted or expired', 401));
+  }
+  console.log(jwtAuth);
+  if (freshUser.changePasswordAfter(jwtAuth.iat)) {
+    return next(
+      new AppErrors('The password has being changed!Login Again', 401)
+    );
+  }
+  req.user = freshUser;
+  next();
+});
+exports.allowedRole = (...roles) => {
+  return (req, res, next) => {
+    if (!roles.includes(req.user.role)) {
+      return next(
+        new AppErrors("You don't have any permission to use this route!", 403)
+      );
+    }
+    next();
+  };
+};
+exports.forgetPassword = catchAsync(async (req, res, next) => {
+  //find the email is valid
+  const userEmail = await Users.findOne({ email: req.body.email });
+  if (!userEmail) {
+    return next(new AppErrors('The email is not exist.', 404));
+  }
+  //create password reset token
+  const resetToken = userEmail.createPasswordResetToken();
+
+  await userEmail.save({ ValidateBeforeSave: false });
+
+  //send email!
+  const resetURL = `${req.protocol}://${req.get(
+    'host'
+  )}/api/v1/users/resetPassword/${resetToken}`;
+
+  const message = `
+  <!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<title>Your email title</title>
+</head>
+<body>
+Forget your Password?\nDon't worry This is usually happen.<a href="${resetURL}">Reset Password</a>\nPlease click the above link and reset password.\nIf you're not please ignore this email.\nIf you requested?Then Hurry it's '10 minutes' valid.
+</body>
+</html>`;
+
+  try {
+    await sendEmail({
+      email: userEmail.email,
+      subject: 'Forget Password?Easy!Reset it.',
+      message,
+    });
+    res.status(200).json({
+      status: 'success',
+      message: 'Success!Email Sent!',
+    });
+  } catch (error) {
+    userEmail.passwordResetToken = undefined;
+    userEmail.passwordResetTokenExpires = undefined;
+    await userEmail.save({ ValidateBeforeSave: false });
+    return next(
+      new AppErrors(
+        "Sorry.We'd encountered some errors.Please Try Again Later.",
+        500
+      )
+    );
+  }
+});
+exports.resetPassword = catchAsync(async (req, res, next) => {
+  //STEP 1) compare the requested token with database token
+
+  const hashedToken = crypto
+    .createHash('sha256')
+    .update(req.params.token)
+    .digest('hex');
+  console.log(hashedToken);
+  const verifiedUser = await Users.findOne({
+    passwordResetToken: hashedToken,
+    passwordResetTokenExpires: { $gt: Date.now() },
+  });
+  //STEP 2) check the token is valid or expires
+  console.log(verifiedUser);
+  if (!verifiedUser) {
+    return next(new AppErrors('Your Token is invalid or Expired', 406));
+  }
+
+  verifiedUser.password = req.body.password;
+  verifiedUser.passwordConfirm = req.body.passwordConfirm;
+  verifiedUser.passwordResetToken = undefined;
+  verifiedUser.passwordResetTokenExpires = undefined;
+  verifiedUser.save();
+
+  //STEP 3) Update the user password
+
+  //STEP 4) Set the JWT token and let the user login.
+  const token = signToken(verifiedUser._id);
+  res.status(201).json({
+    status: 'success',
+    message: 'Success Password Reset!',
+    token,
+  });
+});
+exports.updatePassword = catchAsync(async (req, res, next) => {
+  //check the JWT auth token if the user is permission
+  let token = '';
+  if (
+    req.headers.authorization &&
+    req.headers.authorization.startsWith('Bearer')
+  ) {
+    token = req.headers.authorization.split(' ')[1];
+  }
+  if (!token) {
+    return next(new AppErrors('You are not authorize!Please Login!', 403));
+  }
+  const jwtKey = await promisify(jwt.verify)(token, process.env.JWT_KEY).catch(
+    (error) => {
+      return next(new AppErrors('Token is invalid', 400));
+    }
+  );
+  console.log(jwtKey);
+
+  //find the user according to it's data
+  const currentUser = await Users.findById(jwtKey.id).select("+password");
+  
+  //check the user password
+  if(!currentUser.checkPassword(req.body.password,currentUser.password)){
+    return next(new AppErrors("Sorry The password is invalid",403))
+  }
+  currentUser.password = req.body.newPassword
+  currentUser.passwordConfirm = req.body.passwordConfirm
+  await currentUser.save();
+  const JWTToken = signToken(currentUser._id);
+  res.status(201).json({
+    status: 'success',
+    message: 'Success!Password updated!',
+    JWTToken,
+  });
+});
