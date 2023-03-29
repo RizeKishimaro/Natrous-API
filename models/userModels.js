@@ -40,6 +40,11 @@ const users = new mongoose.Schema({
       message: 'Your Confirm password must be same as the password',
     },
   },
+  active: {
+    type: Boolean,
+    select: false,
+    default: true
+  },
   passwordChange: Date,
   passwordResetToken: String,
   passwordResetTokenExpires: Date,
@@ -54,13 +59,17 @@ users.pre('save', async function (next) {
 });
 users.methods.changePasswordAfter = function (JWTTimestamp) {
   if (this.passwordChange) {
-    const changedTime = parseInt(this.passwordChange.getTime() / 1000, 10);
-    console.log(changedTime, JWTTimestamp);
+    const changedTime = Date.parse(this.passwordChange) / 1000;
+    console.log(JWTTimestamp , changedTime);
     return JWTTimestamp < changedTime;
   }
   return false;
 };
 
+users.pre(/^find/,function(next){
+  this.find({ active: {$ne: false}});
+  next();
+})
 users.methods.checkPassword = async function (userPassword, hashedPassword) {
   return await bcrypt.compare(userPassword, hashedPassword);
 };

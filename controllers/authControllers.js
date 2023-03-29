@@ -10,6 +10,15 @@ const signToken = (id) => {
     expiresIn: process.env.JWT_EXPIRES,
   });
 };
+const sendJwtToken = (user,status,res)=>{
+  const token = signToken(user._id);
+  res.status(status).json({
+    status: 'success',
+    message: 'Success!Your request is being processed',
+    token,
+    user: user,
+  });
+}
 exports.signUpUser = catchAsync(async (req, res, next) => {
   const newUser = await Users.create({
     name: req.body.name,
@@ -18,13 +27,7 @@ exports.signUpUser = catchAsync(async (req, res, next) => {
     passwordConfirm: req.body.passwordConfirm,
     role: req.body.role,
   });
-  const token = signToken(newUser._id);
-  res.status(201).json({
-    status: 'success',
-    message: 'Success Your account is created!',
-    token,
-    user: newUser,
-  });
+  sendJwtToken(newUser,201,res)
 });
 exports.loginUser = catchAsync(async (req, res, next) => {
   const { email, password } = { ...req.body };
@@ -39,12 +42,7 @@ exports.loginUser = catchAsync(async (req, res, next) => {
   if (!user || !(await user.checkPassword(password, user.password))) {
     return next(new AppErrors('Invalid Username or Password!', 400));
   }
-  const token = signToken(user._id);
-  console.log(token);
-  res.status(200).json({
-    status: 'Success',
-    token: token,
-  });
+  sendJwtToken(user,200,res)
 });
 exports.protect = catchAsync(async (req, res, next) => {
   let token = '';
@@ -69,7 +67,7 @@ exports.protect = catchAsync(async (req, res, next) => {
   if (!freshUser) {
     return next(new AppErrors('Your account has been deleted or expired', 401));
   }
-  console.log(jwtAuth);
+  
   if (freshUser.changePasswordAfter(jwtAuth.iat)) {
     return next(
       new AppErrors('The password has being changed!Login Again', 401)
@@ -123,9 +121,9 @@ Forget your Password?\nDon't worry This is usually happen.<a href="${resetURL}">
       message,
     });
     res.status(200).json({
-      status: 'success',
-      message: 'Success!Email Sent!',
-    });
+      status: "Success!Password Reset link sent!",
+      message: "Your password reset link is sent to your email!"
+    })
   } catch (error) {
     userEmail.passwordResetToken = undefined;
     userEmail.passwordResetTokenExpires = undefined;
@@ -165,12 +163,7 @@ exports.resetPassword = catchAsync(async (req, res, next) => {
   //STEP 3) Update the user password
 
   //STEP 4) Set the JWT token and let the user login.
-  const token = signToken(verifiedUser._id);
-  res.status(201).json({
-    status: 'success',
-    message: 'Success Password Reset!',
-    token,
-  });
+  sendJwtToken(verifiedUser,200,res)
 });
 exports.updatePassword = catchAsync(async (req, res, next) => {
   //check the JWT auth token if the user is permission
@@ -194,17 +187,13 @@ exports.updatePassword = catchAsync(async (req, res, next) => {
   //find the user according to it's data
   const currentUser = await Users.findById(jwtKey.id).select("+password");
   
+  console.log(await currentUser.checkPassword(req.body.password,currentUser.password))
   //check the user password
-  if(!currentUser.checkPassword(req.body.password,currentUser.password)){
+  if(!await currentUser.checkPassword(req.body.password,currentUser.password)){
     return next(new AppErrors("Sorry The password is invalid",403))
   }
   currentUser.password = req.body.newPassword
   currentUser.passwordConfirm = req.body.passwordConfirm
   await currentUser.save();
-  const JWTToken = signToken(currentUser._id);
-  res.status(201).json({
-    status: 'success',
-    message: 'Success!Password updated!',
-    JWTToken,
-  });
+  sendJwtToken(currentUser,200,res)
 });

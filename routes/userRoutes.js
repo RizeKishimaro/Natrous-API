@@ -8,8 +8,17 @@ routers.post('/signup', authControllers.signUpUser);
 routers.post('/login', authControllers.loginUser);
 routers.post('/forgotPassword', authControllers.forgetPassword);
 routers.patch('/resetPassword/:token', authControllers.resetPassword);
-routers.post("/updatePassword", authControllers.updatePassword);
-
+routers.post('/updatePassword', authControllers.updatePassword);
+routers.patch(
+  '/updateData',
+  authControllers.protect,
+  userControllers.updateUserData
+);
+routers.delete(
+  '/deactivateAccount',
+  authControllers.protect,
+  userControllers.deleteUserData
+);
 routers
   .route('/')
   .get(authControllers.protect, userControllers.getAllUsers)
