@@ -1,4 +1,5 @@
 const morgan = require('morgan');
+const rateLimit = require('express-rate-limit');
 const express = require('express');
 const app = express();
 const tourRouters = require('./routes/tourRoutes');
@@ -7,6 +8,12 @@ const adminRouters = require('./routes/adminRoutes');
 const errorControllers = require('./controllers/errorControllers');
 const AppErrors = require('./utils/appErrors');
 app.use(morgan('dev'));
+const limiter = rateLimit({
+  max: 100,
+  windowMs: 60 * 60 * 1000,
+  message: "Monika: Stowp!I'm Begging you please Don't destroy Me Please?",
+});
+app.use("/api",limiter);
 app.use(express.json());
 app.use(express.static(`${__dirname}/public`));
 app.use((req, res, next) => {

@@ -12,6 +12,13 @@ const signToken = (id) => {
 };
 const sendJwtToken = (user,status,res)=>{
   const token = signToken(user._id);
+  const cookieOptions = {
+    expires: Date.now()+ process.env.JWT_EXPIRES_IN * 60 * 60 * 1000,
+    httpOnly: true
+  }
+  if(process.env.NODE_ENV === 'production') cookieOptions.secure = true;
+  user.password = undefined;
+  res.cookie("jwt",token,cookieOptions)
   res.status(status).json({
     status: 'success',
     message: 'Success!Your request is being processed',
