@@ -1,6 +1,7 @@
 const Users = require('../models/userModels');
 const AppErrors = require('../utils/appErrors');
 const catchAsync = require('../utils/catchError');
+const functionFactory = require("./functionFactory");
 const { allowedRole } = require('./authControllers');
 const filterObj = (obj, ...fields) => {
   let filteredObj = {};
@@ -59,6 +60,4 @@ exports.getUser = (req, res) => {
 exports.updateUser = (req, res) => {
   res.status(500).json({ message: 'This route will be defined in Future' });
 };
-exports.deleteUser = (req, res) => {
-  res.status(500).json({ message: 'This route will be defined in Future' });
-};
+exports.deleteUser = functionFactory.deleteReqData(Users);

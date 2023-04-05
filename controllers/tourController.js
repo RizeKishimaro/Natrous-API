@@ -3,6 +3,7 @@ const fs = require("fs");
 const ApiFeatures = require('../utils/apiFeatures');
 const catchAsync = require('../utils/catchError');
 const AppErrors = require('../utils/appErrors');
+const functionFactory = require("./functionFactory");
 exports.checkParams = (req, res, next) => {
   if (!req.body.price || !req.body.name) {
     console.log(req.body);
@@ -31,48 +32,10 @@ exports.getTours = catchAsync(async (req, res, next) => {
   });
 });
 
-exports.postTour = catchAsync(async (req, res, next) => {
-  const newTour = await Tour.create(req.body);
-  if (newTour.length === 0) {
-    return res.status(400).json({
-      status: 'failed',
-      message: 'The Document You Requested Was No Longer Existed!',
-    });
-  }
-  res.status(201).json({
-    status: 'success',
-    data: newTour,
-  });
-});
-exports.deleteTour = catchAsync(async (req, res, next) => {
-  const tour = await Tour.findByIdAndDelete(req.params.id);
-  if (!tour) {
-    return next(new AppErrors('The requested ID is Not Valid', 404));
-  }
-  res.status(204).json({
-    status: "Sayori: success"
-  })
-});
+exports.postTour = functionFactory.createReqData(Tour);
+exports.deleteTour = functionFactory.deleteReqData(Tour);
 
-exports.updateTours = catchAsync(async (req, res, next) => {
-  const id = req.params.id;
-  const data = req.body;
-  const tour = await Tour.findByIdAndUpdate(id, data, {
-    new: true,
-    runValidators: true,
-  });
-  if (!tour) {
-    return next(new AppErrors('The ID you provided is not Valid', 404));
-  }
-  res.status(201).json({
-    status: 'success',
-    result: tour.length,
-    requestTime: new Date().toISOString,
-    data: {
-      tour: tour,
-    },
-  });
-});
+exports.updateTours = functionFactory.updateReqData(Tour);
 exports.getRouteById = catchAsync(async (req, res, next) => {
   const id = req.params.id;
   const tour = await Tour.findById(id).populate("reviews")

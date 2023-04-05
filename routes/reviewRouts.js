@@ -1,8 +1,11 @@
 const express = require('express');
 const authController = require('../controllers/authControllers');
 const reviewControllers = require('../controllers/reviewControllers');
-const reviewRouters = express.Router();
-
+const reviewRouters = express.Router({ mergeParams: true });
+reviewRouters
+  .route('/:id')
+  .delete(reviewControllers.deleteReview)
+  .patch(reviewControllers.updateReview);
 reviewRouters
   .route('/')
   .get(
