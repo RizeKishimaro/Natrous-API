@@ -3,6 +3,7 @@ const routers = express.Router();
 const catchAsync = require('./../');
 const userControllers = require('../controllers/userControllers');
 const authControllers = require('../controllers/authControllers');
+const reviewsControllers = require('./../controllers/reviewControllers');
 
 routers.post('/signup', authControllers.signUpUser);
 routers.post('/login', authControllers.loginUser);
@@ -30,4 +31,7 @@ routers
   .patch(userControllers.updateUser)
   .delete(userControllers.deleteUser);
 
+routers
+  .route('/:tourId/reviews')
+  .post(authControllers.protect,authControllers.allowedRole('user'), reviewsControllers.createReview);
 module.exports = routers;

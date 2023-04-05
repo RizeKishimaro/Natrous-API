@@ -10,9 +10,8 @@ const app = require('./app');
 const DB = process.env.DATABASE.replace('<PASSWORD>', process.env.PASSWORD);
 mongoose
   .connect(DB, {
-    useCreateIndex: true,
     useNewUrlParser: true,
-    useFindAndModify: false,
+
     useUnifiedTopology: true,
   })
   .then((result) => {

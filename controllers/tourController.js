@@ -49,6 +49,9 @@ exports.deleteTour = catchAsync(async (req, res, next) => {
   if (!tour) {
     return next(new AppErrors('The requested ID is Not Valid', 404));
   }
+  res.status(204).json({
+    status: "Sayori: success"
+  })
 });
 
 exports.updateTours = catchAsync(async (req, res, next) => {
@@ -72,7 +75,7 @@ exports.updateTours = catchAsync(async (req, res, next) => {
 });
 exports.getRouteById = catchAsync(async (req, res, next) => {
   const id = req.params.id;
-  const tour = await Tour.findById(id);
+  const tour = await Tour.findById(id).populate("reviews")
   if (!tour) {
     return next(new AppErrors('The Id was not valid or does not exist', 404));
   }
@@ -85,7 +88,7 @@ exports.getRouteById = catchAsync(async (req, res, next) => {
 });
 exports.addData = (req, res) => {
   fs.readFile(
-    `${__dirname}/../dev-data/data/tours-simple.json`,
+    `${__dirname}/../dev-data/data/tours.json`,
     'utf-8',
     (err, data) => {
       const jsonData = JSON.parse(data);
@@ -101,6 +104,7 @@ exports.addData = (req, res) => {
           res.status(400).json({
             status: 'failed',
             message: 'the data you requesting to insert is already exist',
+            reason: error
           });
         });
     }

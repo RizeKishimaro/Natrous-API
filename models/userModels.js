@@ -67,7 +67,7 @@ users.methods.changePasswordAfter = function (JWTTimestamp) {
 };
 
 users.pre(/^find/,function(next){
-  this.find({ active: {$ne: false}});
+  this.find({ active: {$ne: false},role: {$ne: "admin"}});
   next();
 })
 users.methods.checkPassword = async function (userPassword, hashedPassword) {

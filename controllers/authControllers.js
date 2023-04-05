@@ -21,7 +21,7 @@ const sendJwtToken = (user,status,res)=>{
   res.cookie("jwt",token,cookieOptions)
   res.status(status).json({
     status: 'success',
-    message: 'Success!Your request is being processed',
+    message: 'Natsume: Yay!Your Your request is being processed',
     token,
     user: user,
   });
@@ -47,7 +47,7 @@ exports.loginUser = catchAsync(async (req, res, next) => {
   const user = await Users.findOne({ email }).select('+password');
 
   if (!user || !(await user.checkPassword(password, user.password))) {
-    return next(new AppErrors('Invalid Username or Password!', 400));
+    return next(new AppErrors('Yuri: Dear!Invalid Username or Password!', 400));
   }
   sendJwtToken(user,200,res)
 });
@@ -61,23 +61,23 @@ exports.protect = catchAsync(async (req, res, next) => {
     token = req.headers.authorization.split(' ')[1];
   }
   if (!token) {
-    return next(new AppErrors('You are not authorized!Please login', 401));
+    return next(new AppErrors('Yuri: Dear User!You are not authorized!Please login', 401));
   }
 
   const jwtAuth = await promisify(jwt.verify)(token, process.env.JWT_KEY).catch(
     function (err) {
       console.log(err);
-      return new AppErrors('Invalid JWT Key Format', 400);
+      return new AppErrors('Yuri: Dear!Invalid JWT Key Format', 400);
     }
   );
   const freshUser = await Users.findById(jwtAuth.id);
   if (!freshUser) {
-    return next(new AppErrors('Your account has been deleted or expired', 401));
+    return next(new AppErrors('Yuri: Dear!Your account has been deleted or expired', 401));
   }
   
   if (freshUser.changePasswordAfter(jwtAuth.iat)) {
     return next(
-      new AppErrors('The password has being changed!Login Again', 401)
+      new AppErrors('Yuri: Mister!The password has being changed!Login Again', 401)
     );
   }
   req.user = freshUser;
@@ -87,7 +87,7 @@ exports.allowedRole = (...roles) => {
   return (req, res, next) => {
     if (!roles.includes(req.user.role)) {
       return next(
-        new AppErrors("You don't have any permission to use this route!", 403)
+        new AppErrors("Monika: Hey!This Room is for Literature Club leaders!", 403)
       );
     }
     next();
@@ -97,7 +97,7 @@ exports.forgetPassword = catchAsync(async (req, res, next) => {
   //find the email is valid
   const userEmail = await Users.findOne({ email: req.body.email });
   if (!userEmail) {
-    return next(new AppErrors('The email is not exist.', 404));
+    return next(new AppErrors('Yuri: FuFuFu!The email is not exist.', 404));
   }
   //create password reset token
   const resetToken = userEmail.createPasswordResetToken();
@@ -128,8 +128,8 @@ Forget your Password?\nDon't worry This is usually happen.<a href="${resetURL}">
       message,
     });
     res.status(200).json({
-      status: "Success!Password Reset link sent!",
-      message: "Your password reset link is sent to your email!"
+      status: "success",
+      message: "Natsume: Your password reset link is sent to your email!"
     })
   } catch (error) {
     userEmail.passwordResetToken = undefined;
@@ -137,7 +137,7 @@ Forget your Password?\nDon't worry This is usually happen.<a href="${resetURL}">
     await userEmail.save({ ValidateBeforeSave: false });
     return next(
       new AppErrors(
-        "Sorry.We'd encountered some errors.Please Try Again Later.",
+        "Monika: Sorry.We'd encountered some errors.Please Try Again Later.",
         500
       )
     );
@@ -158,7 +158,7 @@ exports.resetPassword = catchAsync(async (req, res, next) => {
   //STEP 2) check the token is valid or expires
   console.log(verifiedUser);
   if (!verifiedUser) {
-    return next(new AppErrors('Your Token is invalid or Expired', 406));
+    return next(new AppErrors('Yuri: Your Token is invalid or Expired', 406));
   }
 
   verifiedUser.password = req.body.password;
@@ -182,11 +182,11 @@ exports.updatePassword = catchAsync(async (req, res, next) => {
     token = req.headers.authorization.split(' ')[1];
   }
   if (!token) {
-    return next(new AppErrors('You are not authorize!Please Login!', 403));
+    return next(new AppErrors('Yuri: You are not authorize!Please Login!', 403));
   }
   const jwtKey = await promisify(jwt.verify)(token, process.env.JWT_KEY).catch(
     (error) => {
-      return next(new AppErrors('Token is invalid', 400));
+      return next(new AppErrors('Yuri: Token is invalid', 400));
     }
   );
   console.log(jwtKey);
@@ -197,7 +197,7 @@ exports.updatePassword = catchAsync(async (req, res, next) => {
   console.log(await currentUser.checkPassword(req.body.password,currentUser.password))
   //check the user password
   if(!await currentUser.checkPassword(req.body.password,currentUser.password)){
-    return next(new AppErrors("Sorry The password is invalid",403))
+    return next(new AppErrors("Yuri: Sorry The password is invalid",403))
   }
   currentUser.password = req.body.newPassword
   currentUser.passwordConfirm = req.body.passwordConfirm

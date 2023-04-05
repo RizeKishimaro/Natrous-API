@@ -15,6 +15,7 @@ exports.getAllUsers = catchAsync(async (req, res, next) => {
   const users = await Users.find();
   res.status(200).json({
     status: 'success',
+    message: "Sayori: Here Is your Requested Loves Master",
     result: users.length,
     data: users,
   });
@@ -30,15 +31,12 @@ exports.updateUserData = catchAsync(async (req, res, next) => {
   if (req.body.password || req.body.passwordConfirm) {
     return next(
       new AppErrors(
-        "If you're trying to update your password.You should use /updatePassword route",
+        "Natsume: If you're trying to update your password.You should use /updatePassword route!",
         302
       )
     );
   }
-  console.log(req.body);
-  console.log(req.user);
   const filteredObject = filterObj(req.body, 'name', 'email');
-  console.log(filteredObject);
   const updatedUser = await Users.findByIdAndUpdate(
     req.user.id,
     filteredObject,

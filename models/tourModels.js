@@ -8,7 +8,7 @@ const tourSchema = new mongoose.Schema(
       required: [true, 'THE TOUR NAME MUST INSERT'],
       unique: true,
       maxLength: [40, 'A tour must have 40 character or lower.'],
-      minLength: [10, 'A tour must have at least 10 character.']
+      minLength: [10, 'A tour must have at least 10 character.'],
       // validate: [validator.isAlpha, "You should not use number and special characters"]
     },
     slug: String,
@@ -39,9 +39,9 @@ const tourSchema = new mongoose.Schema(
       type: String,
       required: [true, 'difficulity is required'],
       enum: {
-        values: ["easy","medium","hard"],
-        message: "Difficulity must be either: easy, medium, hard"
-      }
+        values: ['easy', 'medium', 'hard'],
+        message: 'Difficulity must be either: easy, medium, hard',
+      },
     },
     price: {
       type: Number,
@@ -50,11 +50,11 @@ const tourSchema = new mongoose.Schema(
     discount: {
       type: Number,
       validate: {
-        validator: function(value){
+        validator: function (value) {
           return value < this.price;
         },
-        message: "The discount price ({VALUE}) must be lower then Tour price."
-      }
+        message: 'The discount price ({VALUE}) must be lower then Tour price.',
+      },
     },
     imageCover: {
       type: String,
@@ -74,6 +74,28 @@ const tourSchema = new mongoose.Schema(
     startDates: {
       type: [Date],
     },
+    startLocation: {
+      type: { type: String, default: 'Point', enum: ['Point'] },
+      coordinates: [Number],
+      address: String,
+      description: String,
+    },
+    locations: [
+      {
+        type: { type: String, default: 'Point', enum: ['Point'] },
+        coordinates: [Number],
+        address: String,
+        description: String,
+        day: Number,
+      },
+    ],
+    guides: [
+      {
+        type: mongoose.Schema.ObjectId,
+        ref: "Users"
+      }
+
+    ]
   },
   {
     toJSON: { virtuals: true },
@@ -88,11 +110,23 @@ tourSchema.post('save', function (doc, next) {
   console.log(doc);
   next();
 });
+// tourSchema.pre("save", async function(next){
+//   const guidesPromise = this.guides.map( async id => Users.findById(id));
+//   this.guides = await Promise.all(guidesPromise);
+//   next();
+// })
 tourSchema.pre(/^find/, function (next) {
   this.find({ secret: { $ne: true } });
   this.start = Date.now();
   next();
 });
+tourSchema.pre(/^find/, function(next){
+  this.populate({
+    path: "guides",
+    select: "-__v -passwordChangeAt"
+  });
+  next(); 
+})
 tourSchema.post(/^find/, function (docs, next) {
   console.log(`It took ${Date.now() - this.start} milliseconds`);
   next();
@@ -104,6 +138,10 @@ tourSchema.pre('aggregate', function (next) {
 tourSchema.virtual('durationWeeks').get(function () {
   return this.duration / 7;
 });
-
+tourSchema.virtual("reviews",{
+  ref: "Review",
+  foreignField: "tours",
+  localField: "_id"
+})
 const Tour = mongoose.model('Tour', tourSchema);
 module.exports = Tour;
