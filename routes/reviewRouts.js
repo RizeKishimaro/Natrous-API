@@ -2,8 +2,10 @@ const express = require('express');
 const authController = require('../controllers/authControllers');
 const reviewControllers = require('../controllers/reviewControllers');
 const reviewRouters = express.Router({ mergeParams: true });
+const functionFactory = require('./../controllers/functionFactory');
 reviewRouters
   .route('/:id')
+  .get(reviewControllers.getReview)
   .delete(reviewControllers.deleteReview)
   .patch(reviewControllers.updateReview);
 reviewRouters
@@ -16,6 +18,7 @@ reviewRouters
   .post(
     authController.protect,
     authController.allowedRole('user'),
+    functionFactory.checkParamsInReq,
     reviewControllers.createReview
   );
 

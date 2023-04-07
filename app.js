@@ -7,6 +7,7 @@ const app = express();
 const tourRouters = require('./routes/tourRoutes');
 const userRouters = require('./routes/userRoutes');
 const adminRouters = require('./routes/adminRoutes');
+const chatRouters = require("./routes/chatRouters")
 const errorControllers = require('./controllers/errorControllers');
 const reviewRouters = require("./routes/reviewRouts");
 const mongoSanitize = require("express-mongo-sanitize");
@@ -53,6 +54,7 @@ app.use('/api/v1/users', userRouters);
 app.use('/api/v1/tours', tourRouters);
 app.use("/api/v1/reviews",reviewRouters);
 app.use('/admin', adminRouters);
+app.use("/api/v1/chat",chatRouters);
 app.use(errorControllers);
 app.all('*', (req, res, next) => {
   // const err = new Error(`The route you're looking for ${req.originalUrl} is not Exist yet`);

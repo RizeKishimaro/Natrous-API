@@ -1,10 +1,15 @@
 const express = require('express');
 const routers = express.Router();
-const catchAsync = require('./../');
 const userControllers = require('../controllers/userControllers');
 const authControllers = require('../controllers/authControllers');
-const reviewsControllers = require('./../controllers/reviewControllers');
+const functionFactory = require('./../controllers/functionFactory');
 
+routers.get(
+  '/me',
+  authControllers.protect,
+  functionFactory.getMe,
+  userControllers.getUser
+);
 routers.post('/signup', authControllers.signUpUser);
 routers.post('/login', authControllers.loginUser);
 routers.post('/forgotPassword', authControllers.forgetPassword);

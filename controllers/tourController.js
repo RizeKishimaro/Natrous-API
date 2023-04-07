@@ -1,9 +1,8 @@
 const Tour = require('../models/tourModels');
-const fs = require("fs");
-const ApiFeatures = require('../utils/apiFeatures');
+const fs = require('fs');
 const catchAsync = require('../utils/catchError');
 const AppErrors = require('../utils/appErrors');
-const functionFactory = require("./functionFactory");
+const functionFactory = require('./functionFactory');
 exports.checkParams = (req, res, next) => {
   if (!req.body.price || !req.body.name) {
     console.log(req.body);
@@ -16,39 +15,12 @@ exports.checkParams = (req, res, next) => {
   next();
 };
 
-exports.getTours = catchAsync(async (req, res, next) => {
-  // Create a base query to find all tours
-  // Execute the query and send the results as a JSON response
-  const features = new ApiFeatures(Tour.find(), req.query)
-    .filter()
-    .limitFields()
-    .paginate()
-    .sort();
-  const results = await features.query;
-  res.status(200).json({
-    status: 'success',
-    result: results.length,
-    data: results,
-  });
-});
-
+exports.getTours = functionFactory.getAllData(Tour);
 exports.postTour = functionFactory.createReqData(Tour);
 exports.deleteTour = functionFactory.deleteReqData(Tour);
 
 exports.updateTours = functionFactory.updateReqData(Tour);
-exports.getRouteById = catchAsync(async (req, res, next) => {
-  const id = req.params.id;
-  const tour = await Tour.findById(id).populate("reviews")
-  if (!tour) {
-    return next(new AppErrors('The Id was not valid or does not exist', 404));
-  }
-  res.status(200).json({
-    status: 'success',
-    data: {
-      tour,
-    },
-  });
-});
+exports.getRouteById = functionFactory.getTourById(Tour, { path: 'reviews' });
 exports.addData = (req, res) => {
   fs.readFile(
     `${__dirname}/../dev-data/data/tours.json`,
@@ -67,7 +39,7 @@ exports.addData = (req, res) => {
           res.status(400).json({
             status: 'failed',
             message: 'the data you requesting to insert is already exist',
-            reason: error
+            reason: error,
           });
         });
     }

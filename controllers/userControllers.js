@@ -54,9 +54,7 @@ exports.updateUserData = catchAsync(async (req, res, next) => {
 exports.createUser = (req, res) => {
   res.status(500).json({ message: 'This route will be defined in Future' });
 };
-exports.getUser = (req, res) => {
-  res.status(500).json({ message: 'This route will be defined in Future' });
-};
+exports.getUser = functionFactory.getTourById(Users)
 exports.updateUser = (req, res) => {
   res.status(500).json({ message: 'This route will be defined in Future' });
 };
