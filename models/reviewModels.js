@@ -35,6 +35,29 @@ const reviewModel = new mongoose.Schema(
     toObject: { virtuals: true },
   }
 );
+reviewModel.statics.averageRating = async function (tourId) {
+  const stats = await this.aggregate([
+    {
+      $match: { tours: tourId },
+    },
+    {
+      $group: {
+        _id: '$tours',
+        nRating: { $sum: 1 },
+        avgRating: { $avg: '$rating' },
+      },
+    },
+  ]);
+  console.log(stats)
+  await Tour.findByIdAndUpdate(tourId,{
+    ratingsQunatity: stats[0].nRating ,
+    ratingsAverage: stats[0].avgRating
+
+  })
+};
+reviewModel.post('save', function () {
+  this.constructor.averageRating(this.tours)
+});
 reviewModel.pre(/^find/, function (next) {
   this.populate({
     path: 'users',

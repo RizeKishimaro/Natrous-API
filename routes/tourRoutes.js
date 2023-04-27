@@ -6,12 +6,17 @@ const reviewRouters = require('../routes/reviewRouts');
 
 tourRouters.use('/:tourId/reviews', reviewRouters);
 // tourRouters.param("id",tourControllers.paramsController);
+tourRouters.use(authControllers.protect);
 tourRouters.route('/get-promotion').get(tourControllers.getToursStatus);
 tourRouters.route('/monthly-plans/:year').get(tourControllers.monthlyPlan);
 tourRouters
   .route('/')
   .get(tourControllers.getTours)
-  .post(tourControllers.checkParams, tourControllers.postTour)
+  .post(
+    tourControllers.checkParams,
+    authControllers.allowedRole('admin', 'lead-guide'),
+    tourControllers.postTour
+  )
   .put(tourControllers.addData)
   .delete(
     authControllers.protect,

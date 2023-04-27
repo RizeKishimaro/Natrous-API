@@ -14,6 +14,8 @@ routers.post('/signup', authControllers.signUpUser);
 routers.post('/login', authControllers.loginUser);
 routers.post('/forgotPassword', authControllers.forgetPassword);
 routers.patch('/resetPassword/:token', authControllers.resetPassword);
+
+routers.use(authControllers.protect);
 routers.post('/updatePassword', authControllers.updatePassword);
 routers.patch(
   '/updateData',
@@ -25,6 +27,8 @@ routers.delete(
   authControllers.protect,
   userControllers.deleteUserData
 );
+
+routers.use(authControllers.allowedRole('admin'));
 routers
   .route('/')
   .get(authControllers.protect, userControllers.getAllUsers)

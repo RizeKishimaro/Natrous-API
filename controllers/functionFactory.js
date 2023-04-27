@@ -53,6 +53,12 @@ exports.getTourById = (Model, popOptions) =>
       },
     });
   });
+exports.checkParamsInReq = (req, res, next) => {
+  console.log(req.body.tours);
+  if (!req.body.tours) req.body.tours = req.params.tourId;
+  if (!req.body.users) req.body.users = req.user.id;
+  next();
+};
 exports.createReqData = (Model) =>
   catchAsync(async (req, res, next) => {
     const newTour = await Model.create(req.body);
@@ -62,12 +68,6 @@ exports.createReqData = (Model) =>
       data: { newTour },
     });
   });
-exports.checkParamsInReq = (req, res, next) => {
-  console.log(req.body.docs)
-  if (!req.body.docs) req.body.docs = req.params.docsId;
-  if (!req.body.users) req.body.users = req.user.id;
-  next();
-};
 exports.getAllData = (Model) =>
   catchAsync(async (req, res, next) => {
     let filter = {};
@@ -86,7 +86,7 @@ exports.getAllData = (Model) =>
       data: { results },
     });
   });
-exports.getMe = (req,res,next)=>{
-  req.params.id = req.user.id
+exports.getMe = (req, res, next) => {
+  req.params.id = req.user.id;
   next();
-}
+};

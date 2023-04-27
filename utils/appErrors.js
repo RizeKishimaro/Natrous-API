@@ -6,7 +6,8 @@ class AppErrors extends Error {
     this.optionalError = true;
     console.log('app error works');
 
-    Error.captureStackTrace(this, this.constructor);
+    const error = Error.captureStackTrace(this, this.constructor);
+    console.log(error);
   }
 }
 

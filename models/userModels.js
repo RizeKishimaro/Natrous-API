@@ -49,6 +49,7 @@ const users = new mongoose.Schema({
   passwordResetToken: String,
   passwordResetTokenExpires: Date,
 });
+
 users.pre('save', async function (next) {
   if (!this.isModified('password')) {
     return next();
@@ -66,11 +67,11 @@ users.methods.changePasswordAfter = function (JWTTimestamp) {
   return false;
 };
 
-users.pre(/^find/,function(next){
-  this.find({ active: {$ne: false},role: {$ne: "admin"}});
-  next();
-})
-users.methods.checkPassword = async function (userPassword, hashedPassword) {
+// users.pre(/^find/,function(next){
+//   this.find({ active: {$ne: false},role: {$ne: "admin"}});
+//   next();
+// })
+users.methods.checkPassword = async function (userPassword, hashedPassword) {  
   return await bcrypt.compare(userPassword, hashedPassword);
 };
 users.pre("save",function(next){
